@@ -1,0 +1,210 @@
+---
+title: "Midterm -- Stats for IR"
+author: "Gustavo Perpetuo"
+date: "Due 4/23/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+**Instructions:**
+
+1. This is a 10-days take-home exam.
+2. This is an individual exam. You should not collaborate.
+3. I will hold office hours Thursday, during class time.
+4. In the office hours, you may not ask questions specifically about the midterm. Please rephrase the issues in terms of similar problems.
+5. If it does not knit, the grade is **zero**.
+6. Good luck!
+
+## Question 1
+
+Thomas Fujiwara wrote the [following tweet](https://twitter.com/thomasfujiwara/status/1249817958874001412?s=20) to analyze the COVID-19 evolution. You should replicate the same graph, not for the Brazilian States, but countries. After this, you should tell us about the COVID-19 trends in the world. In which countries the COVID is going down? In which countries the COVID is going up? Do two separate analysis for the:
+
+1. Evolution of infections
+2. Evolution of casualties
+
+**Hint:** recycle the code you wrote in the last problem set
+
+```{r}
+## Package
+library(devtools)
+install_github("https://github.com/RamiKrispin/coronavirus")
+
+## Loading
+library(coronavirus)
+library(tidyverse)
+library(dplyr)
+
+## Data
+data(coronavirus)
+
+## Code
+coronavirus %>%
+    filter(type == "confirmed") %>%
+    filter(Country.Region %in% c("US", "Italy", "China", "Spain", "Brazil", "Japan")) %>%
+    group_by(Country.Region, date) %>%
+    summarise(total = sum(cases)) %>% 
+ggplot(aes(x = date, y = total, color = Country.Region)) + geom_line() + geom_point() + scale_y_log10() + labs(x = "Time", y = "Confirmed Cases", fill = "Subtitle", title = "Confirmed Cases by Country", caption = "Data Suorce: John Hopkins University") + 
+      theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))
+
+coronavirus %>%
+    filter(type == "death") %>%
+    filter(Country.Region %in% c("US", "Italy", "China", "Spain", "Brazil", "Japan")) %>%
+    group_by(Country.Region, date) %>%
+    summarise(total = sum(cases)) %>% 
+ggplot(aes(x = date, y = total, color = Country.Region)) + geom_line() + geom_point() + scale_y_log10() + labs(x = "Time", y = "Deaths", fill = "Subtitle", title = "Deaths by Country", caption = "Data Suorce: John Hopkins University") + 
+      theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))
+```
+
+*Relating to confirmed cases, the US has the largest number of confirmed cases and it continues to rise. Brazil seems to be following the growth of their confirmed cases. However, Italy and Spain seems to have stabilzied their curve by end of march. On the other hand, China has been delcining since february. Finally, the number of cases from Japan has been increasing. However, we can observe a huge decrese recently.*
+  
+*Relating to the number of deaths, the US has also the largest number of deaths by coronavirus. Their curve seems to continue to rise. Brazil has seen an increase in the number of deaths since the end of march and the curve is rising. However, Italy and Spain also seems to have stabilized their number of deaths. On the other hand, there has been a decline in number of deaths in China, despite of a recent and isolated peak. Finally, Japan has mantained their death rates low compared to the other countries.*
+  
+*I used log in the y axis to replicate what Thomas Fujiwara did in the brazilian states graph.* 
+
+## Question 2
+
+Let the following vector:
+
+```{r}
+ages <- rbinom(100, 50, .2)+18
+```
+
+Compute:
+
+1. The mean of the vector.
+2. The median of the vector.
+3. The quartiles.
+4. The 1-percentile and the 99-percentile.
+5. Make a histogram.
+6. Make a box-plot.
+
+```{r}
+## Mean
+mean(ages)
+
+## Median
+median(ages)
+
+## The Quartiles
+quantile(ages, c(.25, .75)) 
+
+## The 1-percentile and the 99 percentile
+quantile(ages, c(.01, .99)) 
+
+## Histogram
+hist(ages, main = "Ages Hist")
+
+## Box-plot
+boxplot(ages, main = "Ages box")
+```
+
+
+# Question 3
+
+In the following dataset, we have an experiment where researchers send resumes for jobs, randomizing the names of the applicants. In the US, the names of applicants are correlated with race, and this allows firms to select racially based on the person's names.
+
+The paper that this problem came from is the following: Marianne Bertrand and Sendhil Mullainathan (2004) “Are Emily and Greg more employable than Lakisha and Jamal? A field experiment on labor market discrimination.” American Economic Review, vol. 94, no. 4, pp. 991–1013. (https://www.aeaweb.org/articles?id=10.1257/0002828042002561)
+
+The dataset is the following:
+
+```{r}
+resume <- read.csv('https://raw.githubusercontent.com/umbertomig/intro-prob-stat-FGV/master/datasets/resume.csv')
+head(resume)
+```
+
+If has the following variables:
+
+* **firstname:** First name in the resume
+* **sex:** Gender of the applicant
+* **race:** Race of the applicant
+* **call:** Whether a callback was made (call=1) or not (call=0)
+
+Answer the following questions:
+
+1. What is the overall callback rate?
+2. What is the black callback rate?
+3. What is the white callback rate?
+4. What is the Black-Female callback rate?
+5. What is the White-Female callback rate?
+6. What is the callback rate by the first name? Which first name receives the highest and the lowest callback rates?
+7. Make a mosaicplot of the callback rate by race.
+8. Make a mosaicplot of the callback rate by gender.
+
+```{r}
+## What is the overall callback rate?
+mean(resume$call)
+
+## What is the black callback rate?
+c1 = filter(resume, race == "black")
+mean(c1$call)
+
+## What is the white callback rate?
+c2 = filter(resume, race == "white")
+mean(c2$call)
+
+## What is the Black-Female callback rate?
+c3 = filter(resume, race == "black", sex == "female")
+mean(c3$call)
+
+## What is the White-Female callback rate?
+c4 = filter(resume, race == "white", sex == "female")
+mean(c4$call)
+
+## What is the callback rate by the first name? Which first name receives the highest and the lowest callback rates?
+
+resume %>%
+    group_by(firstname) %>%
+    summarise(callback_rate = mean(call)) %>%
+    arrange(callback_rate) %>% 
+    print(n=36)
+
+resume %>%
+    group_by(firstname) %>%
+    summarise(callback_rate = mean(call)) %>%
+    arrange(callback_rate) %>% 
+    head(1)
+
+resume %>%
+    group_by(firstname) %>%
+    summarise(callback_rate = mean(call)) %>%
+    arrange(desc(callback_rate)) %>% 
+    head(1)
+
+
+## Make a mosaicplot of the callback rate by race.
+
+resume$call_factor = factor(resume$call)
+levels(resume$call_factor) = c("Didn't Call" , "Called" )
+ggplot(data = resume) + 
+  geom_bar(mapping = aes(x=race, fill= call_factor), position = "fill") + 
+    labs(x = "Race", y = "Proporção", fill = "Subtitle", title = "Callback Rate by Race", caption = "Data Suorce: Marianne Bertrand and Sendhil Mullainathan (2004)") + 
+      theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))
+
+## Make a mosaicplot of the callback rate by gender.
+resume$call_factor = factor(resume$call)
+levels(resume$call_factor) = c("Didn't Call" , "Called" )
+ggplot(data = resume) + 
+  geom_bar(mapping = aes(x= sex, fill= call_factor), position = "fill") + 
+    labs(x = "Gender", y = "Proportion", fill = "Subtitle", title = "Callback Rate by Gender", caption = "Data Suorce: Marianne Bertrand and Sendhil Mullainathan (2004)") + 
+      theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))
+```
+
+## Question 4
+
+1. What is the fundamental problem of the causal inference? Provide an example.
+
+*the fundamental problem of causal inference is that we can only observe one outcome at a time. There are observable and unobserved factors, which cannot be measured. Therefore, you cannot see the counterfactual.The example is when dealing with a treatment by a medicine. You can observe the outcomes after giving the medicine. However, you cannot observe the counterfactual which is what would have happened if the medicine had not been given.* 
+
+2. One researcher wants to study tax conservatism among the rich. She selects lottery ticket winners to run her study, and she claims that the biggest the ticket the person won, the more the person is against income taxes. Should we believe this study? What are the strengths of this study? What are the weaknesses of this study?
+
+*No, we cannot trust this study due to a major problem of measuring causality. The problem is that she doesn't create a way to measure the average treatment effects. There is not a control group that did not win the lottery. However, the strenght of the study is that she identifies a corellation between the ammount of money won and tax conservatism.*
+
+
+3. Suppose you want to replicate the study in **question 3** in Brazil. What would you do? What are the design choices that you would make? What are the potential problems?
+
+*The potential problems is that race is not as linked to names in Brazil as it is in the US. Therefore, it would be hard to potentially replicate by relying on the correlation between race and names. However, i could ramdomly assign a race to the resumes. The resume could contain a small note of the race of the worker that is applying. This could make sure that the race is explicity being exposed to the person that is examining the resume.*
+
